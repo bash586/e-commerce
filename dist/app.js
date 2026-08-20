@@ -1,0 +1,51 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = __importDefault(require("express"));
+const auth_1 = require("./controllers/auth");
+const products_1 = require("./controllers/products");
+const cart_1 = require("./controllers/cart");
+const checkout_1 = require("./controllers/checkout");
+const orders_1 = require("./controllers/orders");
+const payments_1 = require("./controllers/payments");
+const app = (0, express_1.default)();
+// Routers
+const apiRouter = express_1.default.Router();
+const authRouter = express_1.default.Router();
+authRouter.post("/register", auth_1.registerController);
+authRouter.post("/login", auth_1.loginController);
+authRouter.post("/logout", auth_1.logoutController);
+authRouter.post("/refresh", auth_1.refreshTokenController);
+authRouter.get("/me", auth_1.getCurrentUserController);
+app.use(express_1.default.json());
+const productsRouter = express_1.default.Router();
+productsRouter.get("/", products_1.getProductsController);
+productsRouter.get("/:productId", products_1.getProductByIdController);
+const cartRouter = express_1.default.Router();
+cartRouter.get("/", cart_1.getCartController);
+cartRouter.post("/items", cart_1.addItemToCartController);
+cartRouter.post("/items/:productId", cart_1.updateCartItemController);
+cartRouter.delete("/items/:productId", cart_1.removeCartItemController);
+cartRouter.delete("/", cart_1.clearCartController);
+const checkoutRouter = express_1.default.Router();
+checkoutRouter.post("/", checkout_1.checkoutController);
+const ordersRouter = express_1.default.Router();
+ordersRouter.get("/", orders_1.getOrdersController);
+ordersRouter.get("/:orderId", orders_1.getOrderByIdController);
+const paymentsRouter = express_1.default.Router();
+paymentsRouter.get("/:paymentId", payments_1.getPaymentByIdController);
+const webhooksRouter = express_1.default.Router();
+webhooksRouter.post("/payment", payments_1.paymentWebhookController);
+// Wire up routes
+apiRouter.use("/auth", authRouter);
+apiRouter.use("/products", productsRouter);
+apiRouter.use("/cart", cartRouter);
+apiRouter.use("/checkout", checkoutRouter);
+apiRouter.use("/orders", ordersRouter);
+apiRouter.use("/payments", paymentsRouter);
+apiRouter.use("/webhooks", webhooksRouter);
+app.use("/api/v1", apiRouter);
+exports.default = app;
+//# sourceMappingURL=app.js.map

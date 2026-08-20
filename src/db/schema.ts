@@ -8,6 +8,10 @@ export const usersTable = pgTable("users", {
     passwordHash: varchar("password_hash", { length: 255 }).notNull()
 });
 
+export type User = typeof usersTable.$inferSelect;
+export type NewUser = typeof usersTable.$inferInsert;
+export type PublicUser = Omit<User, "passwordHash">;
+
 export const productsTable = pgTable("products", {
     id: uuid().defaultRandom().primaryKey(),
     name: varchar({ length: 255 }).notNull().unique(),
@@ -40,7 +44,7 @@ export const cartItemsTable = pgTable("cartItems", {
     index("idx_cartitem_cartid").on(table.cartId),
     index("idx_cartitem_productid").on(table.productId)
 ]);
-const orderStatus = pgEnum("order_status", [
+export const orderStatus = pgEnum("order_status", [
     "pending", "confirmed", "shipped", "delivered", "cancelled"
 ]);
 
@@ -49,7 +53,7 @@ export const ordersTable = pgTable("orders", {
     userId: uuid("user_id")
         .references(() => usersTable.id, { onDelete: "cascade" })
         .notNull(),
-    status: orderStatus().default("pending").notNull(),
+    status: orderStatus("status").default("pending").notNull(),
     total: numeric({ precision: 10, scale: 2 }).notNull()
 }, (table) => [
     index("idx_order_userid").on(table.userId)
@@ -70,7 +74,7 @@ export const orderItemsTable = pgTable("orderItems", {
     index("idx_orderitem_productid").on(table.productId)
 ]);
 
-const paymentStatus = pgEnum("payment_status", [
+export const paymentStatus = pgEnum("payment_status", [
     "pending", "succeeded", "failed", "cancelled"
 ]);
 export const paymentsTable = pgTable("payments", {
@@ -79,7 +83,7 @@ export const paymentsTable = pgTable("payments", {
         .references(() => ordersTable.id, { onDelete: "cascade" })
         .notNull(),
     amount: numeric({ precision: 10, scale: 2 }).notNull(),
-    status: paymentStatus().default("pending").notNull(),
+    status: paymentStatus("status").default("pending").notNull(),
     provider: varchar({ length: 100 }).notNull(),
     providerPaymentId: varchar("provider_payment_id", { length: 255 }).notNull()
 }, (table) => [

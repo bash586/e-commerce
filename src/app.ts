@@ -28,7 +28,6 @@ import {
 } from "./controllers/payments";
 
 const app = express();
-
 app.use(express.json());
 
 // Routers
