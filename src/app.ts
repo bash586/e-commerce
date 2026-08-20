@@ -26,10 +26,10 @@ import {
     getPaymentByIdController,
     paymentWebhookController
 } from "./controllers/payments";
+import { errorMiddleware } from "./middleware";
 
 const app = express();
 app.use(express.json());
-
 // Routers
 const apiRouter = express.Router();
 
@@ -74,5 +74,6 @@ apiRouter.use("/payments", paymentsRouter);
 apiRouter.use("/webhooks", webhooksRouter);
 
 app.use("/api/v1", apiRouter);
+app.use(errorMiddleware);
 
 export default app;

@@ -26,9 +26,9 @@ export class ForeignKeyViolationError extends PostgresError {
     }
 }
 
-export function mapDbError(err: unknown): PostgresError | undefined {
-    if (!(err instanceof Error) || !("code" in err)) return;
-    switch (err.code) {
+export function mapDbError(err: any): PostgresError | undefined {
+    if (!(typeof err?.cause?.code === "string")) return;
+    switch (err?.cause?.code) {
         case PG_CODES.UNIQUE_VIOLATION:
             return new UniqueViolationError(err.message);
         case PG_CODES.FOREIGN_KEY_VIOLATION:

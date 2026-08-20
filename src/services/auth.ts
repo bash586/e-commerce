@@ -12,11 +12,9 @@ export async function registerUser(
         return await createUser(email, passwordHash);
     } catch (err: unknown) {
         const dbError = mapDbError(err);
-
         if (dbError instanceof UniqueViolationError) {
             dbError.message = "Email already in use";
         }
-
         throw dbError || err;
     }
 }
