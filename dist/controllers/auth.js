@@ -39,19 +39,77 @@ exports.logoutController = logoutController;
 exports.refreshTokenController = refreshTokenController;
 exports.getCurrentUserController = getCurrentUserController;
 const z = __importStar(require("zod"));
-const UserSchema = z.object({
+const auth_1 = require("../services/auth");
+const config_1 = require("../config");
+const jsonwebtoken_1 = require("jsonwebtoken");
+// Auth schemas
+const RegisterSchema = z.object({
     name: z.string().min(8),
-    email: z.string().email()
+    email: z.email().min(8),
+    password: z.string().min(8),
+    confirmationPassword: z.string().min(8)
+}).refine((data) => data.confirmationPassword === data.password, {
+    message: "passwords do not match!"
+});
+const LoginSchema = z.object({
+    email: z.email().min(8),
+    password: z.string().min(8)
 });
 async function registerController(req, res) {
-    const data = req.body;
-    res.json({ message: data.name });
+    const result = RegisterSchema.safeParse(req.body);
+    if (!result.success) {
+        res.status(400).json({
+            errors: result.error.issues
+        });
+        return;
+    }
+    const { email, password } = result.data;
+    const authResponse = await (0, auth_1.registerUser)(email, password);
+    res.cookie("access_token", authResponse.accessToken, {
+        httpOnly: true,
+        secure: config_1.config.env === "production",
+        sameSite: "strict",
+        maxAge: Number(config_1.config.jwt.expiresAtMs)
+    });
+    res.cookie("refresh_token", authResponse.refreshToken, {
+        httpOnly: true,
+        secure: config_1.config.env === "production",
+        sameSite: "strict",
+        maxAge: Number(config_1.config.jwt.refreshExpiresAtMs)
+    });
+    res.status(201).json(authResponse);
 }
 async function loginController(req, res) {
-    res.json({ message: "Dummy login" });
+    const result = LoginSchema.safeParse(req.body);
+    if (!result.success) {
+        res.status(400).json({
+            errors: result.error.issues
+        });
+        return;
+    }
+    const { email, password } = result.data;
+    const authResponse = await (0, auth_1.loginUser)(email, password);
+    res.cookie("access_token", authResponse.accessToken, {
+        httpOnly: true,
+        secure: config_1.config.env === "production",
+        maxAge: Number(config_1.config.jwt.expiresAtMs)
+    });
+    res.cookie("refresh_token", authResponse.refreshToken, {
+        httpOnly: true,
+        secure: config_1.config.env === "production",
+        maxAge: Number(config_1.config.jwt.refreshExpiresAtMs)
+    });
+    res.status(200).json(authResponse);
 }
 async function logoutController(req, res) {
-    res.json({ message: "Dummy logout" });
+    const tokenHash = req.signedCookies.refresh_token;
+    const accessToken = req.signedCookies.access_token;
+    const jwtPayload = (0, jsonwebtoken_1.decode)(accessToken, { json: true });
+    res.clearCookie("refresh_token");
+    res.clearCookie("access_token");
+    //TODO: test manually how jwt.subject can be accessed
+    await (0, auth_1.logoutUser)(jwtPayload?.subject, tokenHash);
+    res.status(204).json();
 }
 async function refreshTokenController(req, res) {
     res.json({ message: "Dummy refresh token" });

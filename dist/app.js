@@ -4,13 +4,17 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
+const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const auth_1 = require("./controllers/auth");
 const products_1 = require("./controllers/products");
 const cart_1 = require("./controllers/cart");
 const checkout_1 = require("./controllers/checkout");
 const orders_1 = require("./controllers/orders");
 const payments_1 = require("./controllers/payments");
+const middleware_1 = require("./middleware");
 const app = (0, express_1.default)();
+app.use(express_1.default.json());
+app.use((0, cookie_parser_1.default)());
 // Routers
 const apiRouter = express_1.default.Router();
 const authRouter = express_1.default.Router();
@@ -19,7 +23,6 @@ authRouter.post("/login", auth_1.loginController);
 authRouter.post("/logout", auth_1.logoutController);
 authRouter.post("/refresh", auth_1.refreshTokenController);
 authRouter.get("/me", auth_1.getCurrentUserController);
-app.use(express_1.default.json());
 const productsRouter = express_1.default.Router();
 productsRouter.get("/", products_1.getProductsController);
 productsRouter.get("/:productId", products_1.getProductByIdController);
@@ -47,5 +50,6 @@ apiRouter.use("/orders", ordersRouter);
 apiRouter.use("/payments", paymentsRouter);
 apiRouter.use("/webhooks", webhooksRouter);
 app.use("/api/v1", apiRouter);
+app.use(middleware_1.errorMiddleware);
 exports.default = app;
 //# sourceMappingURL=app.js.map

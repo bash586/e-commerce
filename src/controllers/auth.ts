@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import * as z from "zod"
-import { registerUser } from "../services/auth";
+import { loginUser, logoutUser, registerUser } from "../services/auth";
+import { config } from "../config";
+import { decode } from "jsonwebtoken";
 
 // Auth schemas
 const RegisterSchema = z.object({
@@ -27,8 +29,23 @@ export async function registerController(req: Request, res: Response): Promise<v
     }
 
     const { email, password } = result.data;
-    const user = await registerUser(email, password);
-    res.status(201).json(user);
+    const authResponse = await registerUser(email, password);
+
+    res.cookie("access_token", authResponse.accessToken, {
+        httpOnly: true,
+        secure: config.env === "production",
+        sameSite: "strict",
+        maxAge: Number(config.jwt.expiresAtMs)
+    });
+
+    res.cookie("refresh_token", authResponse.refreshToken, {
+        httpOnly: true,
+        secure: config.env === "production",
+        sameSite: "strict",
+        maxAge: Number(config.jwt.refreshExpiresAtMs)
+    });
+
+    res.status(201).json(authResponse);
 }
 
 export async function loginController(req: Request, res: Response): Promise<void> {
@@ -42,12 +59,32 @@ export async function loginController(req: Request, res: Response): Promise<void
     }
 
     const { email, password } = result.data;
-    // const user = await loginUser(email, password);
-    res.status(200).json({ message: "Dummy login" });
+    const authResponse = await loginUser(email, password);
+
+    res.cookie("access_token", authResponse.accessToken, {
+        httpOnly: true,
+        secure: config.env === "production",
+        maxAge: Number(config.jwt.expiresAtMs)
+    });
+
+    res.cookie("refresh_token", authResponse.refreshToken, {
+        httpOnly: true,
+        secure: config.env === "production",
+        maxAge: Number(config.jwt.refreshExpiresAtMs)
+    });
+    res.status(200).json(authResponse);
 }
 
 export async function logoutController(req: Request, res: Response): Promise<void> {
-    res.json({ message: "Dummy logout" });
+    const rawRefreshToken = req.cookies.refresh_token;
+    const accessToken = req.cookies.access_token;
+    const jwtPayload = decode(accessToken, { json: true });
+    res.clearCookie("refresh_token");
+    res.clearCookie("access_token");
+    //TODO: test manually how jwt.subject can be accessed
+    await logoutUser(jwtPayload?.sub!, rawRefreshToken);
+
+    res.status(204).json();
 }
 
 export async function refreshTokenController(req: Request, res: Response): Promise<void> {

@@ -4,10 +4,16 @@ exports.config = void 0;
 process.loadEnvFile("./.env");
 ;
 exports.config = {
+    env: process.env.NODE_ENV || "development",
     port: Number(envOrThrow("PORT")),
     db: {
         url: envOrThrow("DATABASE_URL")
-    }
+    },
+    jwt: {
+        secret: envOrThrow("JWT_SECRET"),
+        expiresAtMs: envOrThrow("JWT_EXPIRES_AT"),
+        refreshExpiresAtMs: envOrThrow("JWT_REFRESH_EXPIRES_AT")
+    },
 };
 function envOrThrow(key) {
     const value = process.env[key];

@@ -1,4 +1,5 @@
 import express from "express";
+import cookieParser from "cookie-parser";
 import {
     registerController,
     loginController,
@@ -30,6 +31,7 @@ import { errorMiddleware } from "./middleware";
 
 const app = express();
 app.use(express.json());
+app.use(cookieParser());
 // Routers
 const apiRouter = express.Router();
 

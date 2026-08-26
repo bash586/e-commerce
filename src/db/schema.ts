@@ -1,4 +1,4 @@
-import { numeric, pgTable, text, uuid, varchar, integer, primaryKey, index, uniqueIndex, pgEnum } from "drizzle-orm/pg-core";
+import { numeric, pgTable, text, uuid, varchar, integer, primaryKey, index, uniqueIndex, pgEnum, timestamp } from "drizzle-orm/pg-core";
 
 export const usersTable = pgTable("users", {
     id: uuid().defaultRandom().primaryKey(),
@@ -89,3 +89,19 @@ export const paymentsTable = pgTable("payments", {
 }, (table) => [
     index("idx_payment_orderid").on(table.orderId)
 ]);
+
+export const refreshTokensTable = pgTable("refresh_tokens", {
+    id: uuid().defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+        .notNull()
+        .references(() => usersTable.id, { onDelete: "cascade" }),
+    tokenHash: varchar("token_hash")
+        .notNull()
+        .unique(),
+    expiresAt: timestamp("expires_at", { withTimezone: true })
+        .notNull()
+}, (table) => [
+    index("idx_refreshtoken_userid").on(table.userId)
+]);
+export type RefreshToken = typeof refreshTokensTable.$inferSelect;
+export type NewRefreshToken = typeof refreshTokensTable.$inferInsert;

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.paymentsTable = exports.paymentStatus = exports.orderItemsTable = exports.ordersTable = exports.orderStatus = exports.cartItemsTable = exports.cartsTable = exports.productsTable = exports.usersTable = void 0;
+exports.refreshTokensTable = exports.paymentsTable = exports.paymentStatus = exports.orderItemsTable = exports.ordersTable = exports.orderStatus = exports.cartItemsTable = exports.cartsTable = exports.productsTable = exports.usersTable = void 0;
 const pg_core_1 = require("drizzle-orm/pg-core");
 exports.usersTable = (0, pg_core_1.pgTable)("users", {
     id: (0, pg_core_1.uuid)().defaultRandom().primaryKey(),
@@ -80,5 +80,18 @@ exports.paymentsTable = (0, pg_core_1.pgTable)("payments", {
     providerPaymentId: (0, pg_core_1.varchar)("provider_payment_id", { length: 255 }).notNull()
 }, (table) => [
     (0, pg_core_1.index)("idx_payment_orderid").on(table.orderId)
+]);
+exports.refreshTokensTable = (0, pg_core_1.pgTable)("refresh_tokens", {
+    id: (0, pg_core_1.uuid)().defaultRandom().primaryKey(),
+    userId: (0, pg_core_1.uuid)("user_id")
+        .notNull()
+        .references(() => exports.usersTable.id, { onDelete: "cascade" }),
+    tokenHash: (0, pg_core_1.varchar)("token_hash")
+        .notNull()
+        .unique(),
+    expiresAt: (0, pg_core_1.timestamp)("expires_at", { withTimezone: true })
+        .notNull()
+}, (table) => [
+    (0, pg_core_1.index)("idx_refreshtoken_userid").on(table.userId)
 ]);
 //# sourceMappingURL=schema.js.map
