@@ -6,16 +6,16 @@ exports.logoutUser = logoutUser;
 exports.createAccessToken = createAccessToken;
 exports.createRefreshToken = createRefreshToken;
 exports.refreshAccessToken = refreshAccessToken;
-const node_crypto_1 = require("node:crypto");
 const users_1 = require("../db/queries/users");
-const argon2_1 = require("argon2");
-const postgres_1 = require("../errors/postgres");
 const http_1 = require("../errors/http");
 const tokens_1 = require("../db/queries/tokens");
 const config_1 = require("../config");
 const jsonwebtoken_1 = require("jsonwebtoken");
+const passwords_1 = require("../utils/passwords");
+const crypto_1 = require("../utils/crypto");
+const postgres_1 = require("../errors/postgres");
 async function registerUser(email, password) {
-    const passwordHash = await (0, argon2_1.hash)(password);
+    const passwordHash = await (0, passwords_1.hashPassword)(password);
     try {
         const user = await (0, users_1.createUser)(email, passwordHash);
         const accessToken = createAccessToken(user.id);
@@ -23,31 +23,25 @@ async function registerUser(email, password) {
         return { user, accessToken, refreshToken };
     }
     catch (err) {
-        console.log("logged ERROR: ", err?.cause?.code);
-        const dbError = (0, postgres_1.mapDbError)(err);
-        if (dbError instanceof postgres_1.UniqueViolationError) {
-            dbError.message = "Email already in use";
+        if (err instanceof postgres_1.UniqueViolationError) {
+            throw new http_1.BadRequestError("Email already in use");
         }
-        throw dbError || err;
+        throw err;
     }
 }
 async function loginUser(email, password) {
     const user = await (0, users_1.getUserByEmail)(email);
     if (!user)
-        throw new http_1.NotFoundError("Invalid credentials");
-    const success = await (0, argon2_1.verify)(user.passwordHash, password);
+        throw new http_1.UnauthorizedError("Invalid credentials");
+    const success = await (0, passwords_1.verifyPassword)(user.passwordHash, password);
     if (!success)
         throw new http_1.UnauthorizedError("Invalid credentials");
     const accessToken = createAccessToken(user.id);
     const refreshToken = await createRefreshToken(user.id);
     return { user, accessToken, refreshToken };
 }
-async function logoutUser(userId, tokenHash) {
-    const tokenObj = await (0, tokens_1.findRefreshToken)(tokenHash);
-    if (!tokenObj)
-        throw new http_1.NotFoundError("token can not be found");
-    if (tokenObj.userId !== userId)
-        throw new http_1.ForbiddenError("the token is not yours to revoke");
+async function logoutUser(userId, rawRefreshToken) {
+    const tokenHash = (0, crypto_1.hashToken)(rawRefreshToken);
     await (0, tokens_1.deleteRefreshToken)(tokenHash);
 }
 function createAccessToken(userId) {
@@ -63,14 +57,27 @@ function createAccessToken(userId) {
     return (0, jsonwebtoken_1.sign)(payload, config_1.config.jwt.secret, options);
 }
 async function createRefreshToken(userId) {
-    const rawToken = (0, node_crypto_1.randomBytes)(32).toString("base64url");
-    const tokenHash = (0, node_crypto_1.createHash)("sha256")
-        .update(rawToken)
-        .digest("hex");
+    const rawToken = (0, crypto_1.generateRandomToken)();
+    const tokenHash = (0, crypto_1.hashToken)(rawToken);
     const expiresAt = new Date(Date.now() + Number(config_1.config.jwt.refreshExpiresAtMs));
     await (0, tokens_1.storeRefreshToken)(userId, tokenHash, expiresAt);
     return rawToken;
 }
-function refreshAccessToken(oldToken) {
+;
+async function refreshAccessToken(oldToken) {
+    const tokenHash = (0, crypto_1.hashToken)(oldToken);
+    const refreshToken = await (0, tokens_1.getRefreshToken)(tokenHash);
+    if (!refreshToken)
+        throw new http_1.UnauthorizedError("Login to proceed");
+    await (0, tokens_1.deleteRefreshToken)(tokenHash);
+    if (refreshToken.expiresAt.getTime() < Date.now())
+        throw new http_1.UnauthorizedError("Login to proceed");
+    const userId = refreshToken.userId;
+    const rawRefreshToken = await createRefreshToken(userId);
+    const accessToken = createAccessToken(userId);
+    return {
+        accessToken: accessToken,
+        refreshToken: rawRefreshToken
+    };
 }
 //# sourceMappingURL=auth.js.map

@@ -1,11 +1,20 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ForeignKeyViolationError = exports.UniqueViolationError = exports.PostgresError = exports.PG_CODES = void 0;
+exports.TransientDbError = exports.ForeignKeyViolationError = exports.UniqueViolationError = exports.PostgresError = exports.PG_CODES = void 0;
+exports.isTransient = isTransient;
 exports.mapDbError = mapDbError;
 exports.PG_CODES = {
     UNIQUE_VIOLATION: "23505",
     FOREIGN_KEY_VIOLATION: "23503",
 };
+const TRANSIENT_CODES = new Set([
+    "08000", // connection_exception
+    "08003", // connection_does_not_exist
+    "08006", // connection_failure
+    "40001", // serialization_failure
+    "40P01", // deadlock_detected
+    "57014", // query_cancelled (statement timeout)
+]);
 class PostgresError extends Error {
     code;
     constructor(message, code) {
@@ -29,10 +38,28 @@ class ForeignKeyViolationError extends PostgresError {
     }
 }
 exports.ForeignKeyViolationError = ForeignKeyViolationError;
+class TransientDbError extends PostgresError {
+    constructor(message = "Database temporarily unavailable", errCode) {
+        super(message, errCode);
+        this.name = "TransientError";
+    }
+}
+exports.TransientDbError = TransientDbError;
+function isTransient(err) {
+    const code = err?.cause?.code ?? err?.code;
+    if (typeof code === "string" && TRANSIENT_CODES.has(code))
+        return true;
+    const msg = String(err?.cause?.message ?? err?.message ?? "");
+    return /ECONNREFUSED|ECONNRESET/.test(msg);
+}
 function mapDbError(err) {
-    if (!(typeof err?.cause?.code === "string"))
+    if (isTransient(err)) {
+        return new TransientDbError(err.message, err?.cause?.code ?? "TRANSIENT");
+    }
+    const code = err?.cause?.code ?? err?.code;
+    if (!(typeof code === "string"))
         return;
-    switch (err?.cause?.code) {
+    switch (code) {
         case exports.PG_CODES.UNIQUE_VIOLATION:
             return new UniqueViolationError(err.message);
         case exports.PG_CODES.FOREIGN_KEY_VIOLATION:

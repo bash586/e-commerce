@@ -5,7 +5,6 @@ import {
     loginController,
     logoutController,
     refreshTokenController,
-    getCurrentUserController
 } from "./controllers/auth";
 import {
     getProductsController,
@@ -27,7 +26,7 @@ import {
     getPaymentByIdController,
     paymentWebhookController
 } from "./controllers/payments";
-import { errorMiddleware } from "./middleware";
+import { authenticateMiddleware, errorMiddleware } from "./middleware";
 
 const app = express();
 app.use(express.json());
@@ -38,9 +37,8 @@ const apiRouter = express.Router();
 const authRouter = express.Router();
 authRouter.post("/register", registerController);
 authRouter.post("/login", loginController);
-authRouter.post("/logout", logoutController);
+authRouter.post("/logout", authenticateMiddleware, logoutController);
 authRouter.post("/refresh", refreshTokenController);
-authRouter.get("/me", getCurrentUserController);
 
 const productsRouter = express.Router();
 productsRouter.get("/", getProductsController);

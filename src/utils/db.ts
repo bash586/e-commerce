@@ -1,4 +1,4 @@
-import { isTransient, mapDbError } from "../errors/postgres";
+import { mapDbError, TransientDbError } from "../errors/postgres";
 
 export async function withDbErrors<T>(
     queryFn: () => Promise<T>,
@@ -14,22 +14,28 @@ export async function withDbErrors<T>(
         maxDelay = 3000
     } = options || {};
 
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
             return await queryFn();
         } catch (err: unknown) {
             const mapped = mapDbError(err);
-            if (!isTransient(mapped)) {
+            if (!(mapped instanceof TransientDbError)) {
                 throw mapped || err;
             }
             // backoff
-            const delay = Math.min(
-                maxDelay, baseDelay * 2 ** (baseDelay + attempt - 1)
-            );
-            if (attempt < maxRetries) await sleep(delay);
+            if (attempt < maxRetries) {
+                const delay = Math.min(
+                    maxDelay, baseDelay * 2 ** attempt
+                );
+                console.warn(
+                    `[withDbErrors] Transient error (attempt ${attempt + 1}/${maxRetries}), retrying in ${delay}ms:`,
+                    (mapped as Error).message
+                );
+                await sleep(delay);
+            }
         }
     }
-    throw new Error("query failed after max retries");
+    throw new TransientDbError("query failed after max retries", "TRANSIENT");
 }
 
 function sleep(ms: number) {
@@ -38,11 +44,11 @@ function sleep(ms: number) {
     );
 }
 /**
- * @throws error when query does not return value 
+ * @throws error when insert and delete queries are not successful
  */
 export function expectFirstRow<T>(
     result: Array<T> | undefined
 ): T {
-    if (!Array.isArray(result) || result.length === 0) throw new Error("service unavailable");
+    if (!Array.isArray(result) || result.length === 0) throw new Error("unsuccessful operation, retry later...");
     return result[0] as T;
 }

@@ -4,7 +4,10 @@ import {
     NextFunction,
 } from "express";
 import { PostgresError, TransientDbError } from "./errors/postgres";
-import { HttpError } from "./errors/http";
+import { HttpError, UnauthorizedError } from "./errors/http";
+import { verify } from "jsonwebtoken";
+import { JwtSchema } from "./schemas";
+import { config } from "./config";
 
 export async function errorMiddleware(
     err: Error,
@@ -25,5 +28,25 @@ export async function errorMiddleware(
     } else {
         console.error("Unhandled Exception:", err);
         res.status(500).json({ error: "Internal Server Error" });
+    }
+}
+export async function authenticateMiddleware(
+    req: Req,
+    res: Res,
+    next: NextFunction
+) {
+    const accessToken = req.cookies.access_token;
+    if (!accessToken) throw new UnauthorizedError("Login required");
+
+    try {
+        const decoded = verify(accessToken, config.jwt.secret, {
+            algorithms: ["HS256"],
+            issuer: "ecommerce-api",
+        });
+        const payload = JwtSchema.parse(decoded);
+        req.userId = payload.sub;
+        next();
+    } catch {
+        throw new UnauthorizedError("Invalid or expired token");
     }
 }

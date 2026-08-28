@@ -46,7 +46,7 @@ export function isTransient(err: any): boolean {
     const code = err?.cause?.code ?? err?.code;
     if (typeof code === "string" && TRANSIENT_CODES.has(code)) return true;
 
-    const msg = String(err?.message ?? "");
+    const msg = String(err?.cause?.message ?? err?.message ?? "");
     return /ECONNREFUSED|ECONNRESET/.test(msg);
 }
 

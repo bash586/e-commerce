@@ -1,7 +1,7 @@
 import { createUser, getUserByEmail } from "../db/queries/users";
 import { PublicUser } from "../db/schema";
 import { ForbiddenError, NotFoundError, UnauthorizedError, BadRequestError } from "../errors/http";
-import { deleteRefreshToken, storeRefreshToken } from "../db/queries/tokens";
+import { deleteRefreshToken, getRefreshToken, storeRefreshToken } from "../db/queries/tokens";
 import { config } from "../config";
 import { sign, type SignOptions } from "jsonwebtoken";
 import { hashPassword, verifyPassword } from "../utils/passwords";
@@ -74,10 +74,29 @@ export async function createRefreshToken(userId: string): Promise<string> {
 
     const expiresAt = new Date(Date.now() + Number(config.jwt.refreshExpiresAtMs));
 
-    const refreshToken = await storeRefreshToken(userId, tokenHash, expiresAt);
+    await storeRefreshToken(userId, tokenHash, expiresAt);
     return rawToken;
 }
+interface RefreshResponse {
+    accessToken: string;
+    refreshToken: string;
+};
 
-export function refreshAccessToken(oldToken: string) {
+export async function refreshAccessToken(oldToken: string): Promise<RefreshResponse> {
+    const tokenHash = hashToken(oldToken);
+    const refreshToken = await getRefreshToken(tokenHash);
+    if (!refreshToken) throw new UnauthorizedError("Login to proceed");
 
+    await deleteRefreshToken(tokenHash);
+
+    if (refreshToken.expiresAt.getTime() < Date.now()) throw new UnauthorizedError("Login to proceed");
+
+    const userId = refreshToken.userId;
+
+    const rawRefreshToken = await createRefreshToken(userId);
+    const accessToken = createAccessToken(userId);
+    return {
+        accessToken: accessToken,
+        refreshToken: rawRefreshToken
+    };
 }
