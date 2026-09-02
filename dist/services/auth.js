@@ -30,7 +30,7 @@ async function registerUser(email, password) {
     }
 }
 async function loginUser(email, password) {
-    const user = await (0, users_1.getUserByEmail)(email);
+    const user = await (0, users_1.findUserByEmail)(email);
     if (!user)
         throw new http_1.UnauthorizedError("Invalid credentials");
     const success = await (0, passwords_1.verifyPassword)(user.passwordHash, password);

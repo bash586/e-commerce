@@ -4,10 +4,12 @@ import {
     NextFunction,
 } from "express";
 import { PostgresError, TransientDbError } from "./errors/postgres";
-import { HttpError, UnauthorizedError } from "./errors/http";
+import { ForbiddenError, HttpError, UnauthorizedError } from "./errors/http";
 import { verify } from "jsonwebtoken";
 import { JwtSchema } from "./schemas";
 import { config } from "./config";
+import { ZodObject } from "zod";
+import { $ZodIssue } from "zod/v4/core";
 
 export async function errorMiddleware(
     err: Error,
@@ -44,9 +46,49 @@ export async function authenticateMiddleware(
             issuer: "ecommerce-api",
         });
         const payload = JwtSchema.parse(decoded);
-        req.userId = payload.sub;
+        req.user = {
+            id: payload.sub,
+            role: payload.role
+        };
         next();
     } catch {
         throw new UnauthorizedError("Invalid or expired token");
+    }
+}
+
+export function authorizeRoleMiddleware(allowedRoles: string[]) {
+    return (
+        req: Req,
+        res: Res,
+        next: NextFunction
+    ) => {
+        if (!allowedRoles.includes(req.user.role)) {
+            throw new ForbiddenError("You are not authorized to perform this action");
+        }
+        next();
+    }
+}
+
+import * as z from "zod";
+
+export function validateMiddleware(schema: z.ZodObject) {
+    return async (
+        req: Req,
+        res: Res,
+        next: NextFunction
+    ) => {
+        const result = await schema.safeParseAsync(req.body);
+        if (!result.success) {
+            const errors = result.error.issues.map(issue => ({
+                field: issue.path.join("."),
+                message: issue.message,
+            }));
+
+            res.status(400).json({
+                errors: errors
+            });
+            return;
+        }
+        next();
     }
 }

@@ -1,4 +1,5 @@
-process.loadEnvFile("./.env");
+const envFilePath = (process.env.NODE_ENV === "test") ? "./.env.test" : "./.env";
+process.loadEnvFile(envFilePath);
 interface Config {
     env: string;
     port: number;

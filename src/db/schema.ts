@@ -1,11 +1,13 @@
 import { numeric, pgTable, text, uuid, varchar, integer, primaryKey, index, uniqueIndex, pgEnum, timestamp } from "drizzle-orm/pg-core";
 
+const userRoleEnum = pgEnum("user_role", ["customer", "admin"]);
 export const usersTable = pgTable("users", {
     id: uuid().defaultRandom().primaryKey(),
     email: varchar({ length: 255 })
         .notNull()
         .unique(),
-    passwordHash: varchar("password_hash", { length: 255 }).notNull()
+    passwordHash: varchar("password_hash", { length: 255 }).notNull(),
+    role: userRoleEnum("role").default("customer").notNull()
 });
 
 export type User = typeof usersTable.$inferSelect;

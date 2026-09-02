@@ -12,10 +12,12 @@ export const RegisterSchema = z.object({
 
 export const LoginSchema = z.object({
     email: z.email().min(8),
-    password: z.string().min(8)
+    password: z.string().min(8),
+    role: z.string()
 });
 
 export const JwtSchema = z.object({
     sub: z.string(),
-    exp: z.number()
+    exp: z.number(),
+    role: z.string()
 });

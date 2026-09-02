@@ -8,7 +8,8 @@ import {
 } from "./controllers/auth";
 import {
     getProductsController,
-    getProductByIdController
+    getProductByIdController,
+    addProductByIdController
 } from "./controllers/products";
 import {
     getCartController,
@@ -42,6 +43,7 @@ authRouter.post("/refresh", refreshTokenController);
 
 const productsRouter = express.Router();
 productsRouter.get("/", getProductsController);
+productsRouter.post("/", addProductByIdController);
 productsRouter.get("/:productId", getProductByIdController);
 
 const cartRouter = express.Router();
