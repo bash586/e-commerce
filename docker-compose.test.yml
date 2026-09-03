@@ -1,4 +1,14 @@
 services:
+  api:
+    build: .
+    ports:
+      - 3000:3000
+    depends_on:
+      test-db:
+        condition: service_healthy
+    env_file:
+      - ".env.test"
+
   test-db:
     image: postgres:18
     environment:

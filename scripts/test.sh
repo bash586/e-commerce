@@ -19,4 +19,4 @@ npx drizzle-kit migrate
 
 
 echo "Running tests..."
-vitest run
+npx vitest run --project integration

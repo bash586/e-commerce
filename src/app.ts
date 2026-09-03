@@ -27,7 +27,7 @@ import {
     getPaymentByIdController,
     paymentWebhookController
 } from "./controllers/payments";
-import { authenticateMiddleware, errorMiddleware } from "./middleware";
+import { authenticateMiddleware, authorizeRoleMiddleware, errorMiddleware } from "./middleware";
 
 const app = express();
 app.use(express.json());
@@ -39,11 +39,12 @@ const authRouter = express.Router();
 authRouter.post("/register", registerController);
 authRouter.post("/login", loginController);
 authRouter.post("/logout", authenticateMiddleware, logoutController);
-authRouter.post("/refresh", refreshTokenController);
+authRouter.post("/refresh", authenticateMiddleware, refreshTokenController);
 
 const productsRouter = express.Router();
+productsRouter.use(authenticateMiddleware)
 productsRouter.get("/", getProductsController);
-productsRouter.post("/", addProductByIdController);
+productsRouter.post("/", authorizeRoleMiddleware(['admin']), addProductByIdController);
 productsRouter.get("/:productId", getProductByIdController);
 
 const cartRouter = express.Router();

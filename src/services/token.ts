@@ -24,7 +24,7 @@ export interface TokenPair {
 }
 
 export class TokenService {
-    constructor(private deps: TokenDependencies) {}
+    constructor(private deps: TokenDependencies) { }
 
     createAccessToken(userId: string, role: string): string {
         const payload = { role };

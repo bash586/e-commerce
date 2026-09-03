@@ -8,8 +8,6 @@ import { ForbiddenError, HttpError, UnauthorizedError } from "./errors/http";
 import { verify } from "jsonwebtoken";
 import { JwtSchema } from "./schemas";
 import { config } from "./config";
-import { ZodObject } from "zod";
-import { $ZodIssue } from "zod/v4/core";
 
 export async function errorMiddleware(
     err: Error,

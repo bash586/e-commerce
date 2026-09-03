@@ -19,7 +19,7 @@ const tokenService = new TokenService({
     signJwt: sign,
 });
 
-const authService = new AuthService({
+export const authService = new AuthService({
     userRepo: new UserRepository(),
     password: new PasswordService(),
     tokenService,
