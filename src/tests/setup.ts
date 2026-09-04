@@ -1,5 +1,5 @@
 import { beforeAll, beforeEach, vi } from "vitest";
-import { db } from "../db";
+import { db } from "../db/index.js";
 import { sql } from "drizzle-orm";
 
 beforeAll(async () => {

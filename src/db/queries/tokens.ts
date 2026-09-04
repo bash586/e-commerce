@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
-import { db as globalDb } from "../index";
-import { RefreshToken, refreshTokensTable } from "../schema";
-import { expectFirstRow, withDbErrors } from "../../utils/db";
+import { db as globalDb } from "../index.js";
+import { RefreshToken, refreshTokensTable } from "../schema.js";
+import { expectFirstRow, withDbErrors } from "../../utils/db.js";
 
 type DbType = typeof globalDb;
 

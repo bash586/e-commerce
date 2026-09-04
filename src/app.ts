@@ -5,29 +5,29 @@ import {
     loginController,
     logoutController,
     refreshTokenController,
-} from "./controllers/auth";
+} from "./controllers/auth.js";
 import {
     getProductsController,
     getProductByIdController,
     addProductByIdController
-} from "./controllers/products";
+} from "./controllers/products.js";
 import {
     getCartController,
     addItemToCartController,
     updateCartItemController,
     removeCartItemController,
     clearCartController
-} from "./controllers/cart";
-import { checkoutController } from "./controllers/checkout";
+} from "./controllers/cart.js";
+import { checkoutController } from "./controllers/checkout.js";
 import {
     getOrdersController,
     getOrderByIdController
-} from "./controllers/orders";
+} from "./controllers/orders.js";
 import {
     getPaymentByIdController,
     paymentWebhookController
-} from "./controllers/payments";
-import { authenticateMiddleware, authorizeRoleMiddleware, errorMiddleware } from "./middleware";
+} from "./controllers/payments.js";
+import { authenticateMiddleware, authorizeRoleMiddleware, errorMiddleware } from "./middleware.js";
 
 const app = express();
 app.use(express.json());

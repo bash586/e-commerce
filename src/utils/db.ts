@@ -1,4 +1,4 @@
-import { mapDbError, TransientDbError } from "../errors/postgres";
+import { mapDbError, TransientDbError } from "../errors/postgres.js";
 
 export async function withDbErrors<T>(
     queryFn: () => Promise<T>,

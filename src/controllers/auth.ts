@@ -1,14 +1,14 @@
 import { Request, Response } from "express";
-import { sign } from "jsonwebtoken";
-import { config } from "../config";
-import { RegisterSchema, LoginSchema } from "../schemas";
-import { UnauthorizedError } from "../errors/http";
-import { UserRepository } from "../db/queries/users";
-import { TokenRepository } from "../db/queries/tokens";
-import { PasswordService } from "../utils/passwords";
-import { CryptoService } from "../utils/crypto";
-import { TokenService } from "../services/token";
-import { AuthService } from "../services/auth";
+import jwt from "jsonwebtoken";
+import { config } from "../config.js";
+import { RegisterSchema, LoginSchema } from "../schemas.js";
+import { UnauthorizedError } from "../errors/http.js";
+import { UserRepository } from "../db/queries/users.js";
+import { TokenRepository } from "../db/queries/tokens.js";
+import { PasswordService } from "../utils/passwords.js";
+import { CryptoService } from "../utils/crypto.js";
+import { TokenService } from "../services/token.js";
+import { AuthService } from "../services/auth.js";
 
 // --- Wire up dependencies ---
 const tokenService = new TokenService({
@@ -16,7 +16,7 @@ const tokenService = new TokenService({
     userRepo: new UserRepository(),
     crypto: new CryptoService(),
     config,
-    signJwt: sign,
+    signJwt: jwt.sign,
 });
 
 export const authService = new AuthService({

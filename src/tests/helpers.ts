@@ -1,6 +1,6 @@
 import request, { type Response } from "supertest";
-import app from "../app";
-import { AuthResponse } from "../services/auth";
+import app from "../app.js";
+import { AuthResponse } from "../services/auth.js";
 type TestAuthResponse = AuthResponse & { authCookies: string[] }
 
 export async function createTestUser(email: string, password: string): Promise<TestAuthResponse> {

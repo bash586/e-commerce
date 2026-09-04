@@ -1,8 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
 import request from "supertest";
-import app from "../../app";
-import { createTestUser, extractCookies } from "../helpers";
-import { config } from "../../config";
+import app from "../../app.js";
+import { createTestUser, extractCookies } from "../helpers.js";
+import { config } from "../../config.js";
 
 describe("POST /api/v1/auth/register", () => {
     it("should refresh", async () => {

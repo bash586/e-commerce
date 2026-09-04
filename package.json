@@ -9,12 +9,13 @@
     "build": "tsc",
     "dev": "tsx watch --include src src/server.ts",
     "db:migrate": "npx drizzle-kit generate && npx drizzle-kit migrate",
-    "db:studio": "npx drizzle-kit studio"
+    "db:studio": "npx drizzle-kit studio",
+    "addadmin": "npx tsx ./scripts/create-admin.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "dependencies": {
     "argon2": "^0.45.1",
     "cookie-parser": "^1.4.7",

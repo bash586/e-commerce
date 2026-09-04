@@ -3,11 +3,11 @@ import {
     Response as Res,
     NextFunction,
 } from "express";
-import { PostgresError, TransientDbError } from "./errors/postgres";
-import { ForbiddenError, HttpError, UnauthorizedError } from "./errors/http";
-import { verify } from "jsonwebtoken";
-import { JwtSchema } from "./schemas";
-import { config } from "./config";
+import { PostgresError, TransientDbError } from "./errors/postgres.js";
+import { ForbiddenError, HttpError, UnauthorizedError } from "./errors/http.js";
+import jwt from "jsonwebtoken";
+import { JwtSchema } from "./schemas.js";
+import { config } from "./config.js";
 
 export async function errorMiddleware(
     err: Error,
@@ -39,7 +39,7 @@ export async function authenticateMiddleware(
     if (!accessToken) throw new UnauthorizedError("Login required");
 
     try {
-        const decoded = verify(accessToken, config.jwt.secret, {
+        const decoded = jwt.verify(accessToken, config.jwt.secret, {
             algorithms: ["HS256"],
             issuer: "ecommerce-api",
         });

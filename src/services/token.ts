@@ -1,8 +1,8 @@
-import { sign, type SignOptions } from "jsonwebtoken";
-import { TokenRepository } from "../db/queries/tokens";
-import { UserRepository } from "../db/queries/users";
-import { CryptoService } from "../utils/crypto";
-import { NotFoundError, UnauthorizedError } from "../errors/http";
+import jwt from "jsonwebtoken";
+import { TokenRepository } from "../db/queries/tokens.js";
+import { UserRepository } from "../db/queries/users.js";
+import { CryptoService } from "../utils/crypto.js";
+import { NotFoundError, UnauthorizedError } from "../errors/http.js";
 
 export interface TokenDependencies {
     tokenRepo: TokenRepository;
@@ -15,7 +15,7 @@ export interface TokenDependencies {
             refreshExpiresAtMs: string | number;
         };
     };
-    signJwt: typeof sign;
+    signJwt: typeof jwt.sign;
 }
 
 export interface TokenPair {
@@ -28,7 +28,7 @@ export class TokenService {
 
     createAccessToken(userId: string, role: string): string {
         const payload = { role };
-        const options: SignOptions = {
+        const options: jwt.SignOptions = {
             algorithm: "HS256",
             expiresIn: Math.floor(Number(this.deps.config.jwt.expiresAtMs) / 1000),
             issuer: "ecommerce-api",

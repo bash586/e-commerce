@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
-import { db as globalDb } from "..";
-import { PublicUser, User, usersTable } from "../schema";
-import { expectFirstRow, withDbErrors } from "../../utils/db";
+import { db as globalDb } from "../index.js";
+import { PublicUser, User, usersTable } from "../schema.js";
+import { expectFirstRow, withDbErrors } from "../../utils/db.js";
 
 type DbType = typeof globalDb;
 

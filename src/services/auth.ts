@@ -1,9 +1,9 @@
-import { UserRepository } from "../db/queries/users";
-import { PublicUser } from "../db/schema";
-import { UnauthorizedError, BadRequestError } from "../errors/http";
-import { PasswordService } from "../utils/passwords";
-import { UniqueViolationError } from "../errors/postgres";
-import { TokenService } from "./token";
+import { UserRepository } from "../db/queries/users.js";
+import { PublicUser } from "../db/schema.js";
+import { UnauthorizedError, BadRequestError } from "../errors/http.js";
+import { PasswordService } from "../utils/passwords.js";
+import { UniqueViolationError } from "../errors/postgres.js";
+import { TokenService } from "./token.js";
 
 export interface AuthResponse {
     user: PublicUser;

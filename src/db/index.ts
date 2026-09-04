@@ -1,5 +1,10 @@
-import { config } from "../config";
+import { Pool } from "pg";
+import { config } from "../config.js";
 import { drizzle } from "drizzle-orm/node-postgres";
 
-export const db = drizzle(config.db.url);
+export const pool: Pool = new Pool({
+    connectionString: config.db.url,
+    max: 10,
+});
 
+export const db = drizzle({ client: pool });

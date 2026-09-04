@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { validateMiddleware } from "./middleware";
+import { validateMiddleware } from "./middleware.js";
 import { z } from "zod";
 import { Request, Response, NextFunction } from "express";
 
