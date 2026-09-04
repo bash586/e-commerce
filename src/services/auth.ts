@@ -11,20 +11,18 @@ export interface AuthResponse {
     refreshToken: string;
 }
 
-export interface AuthDependencies {
-    userRepo: UserRepository;
-    password: PasswordService;
-    tokenService: TokenService;
-}
-
 export class AuthService {
-    constructor(private deps: AuthDependencies) { }
+    constructor(
+        private userRepo: UserRepository,
+        private password: PasswordService,
+        private tokenService: TokenService
+    ) { }
 
     async registerUser(email: string, password: string): Promise<AuthResponse> {
-        const passwordHash = await this.deps.password.hashPassword(password);
+        const passwordHash = await this.password.hashPassword(password);
         try {
-            const user = await this.deps.userRepo.createUser(email, passwordHash);
-            const { accessToken, refreshToken } = await this.deps.tokenService.generateTokenPair(user.id, user.role);
+            const user = await this.userRepo.createUser(email, passwordHash);
+            const { accessToken, refreshToken } = await this.tokenService.generateTokenPair(user.id, user.email, user.role);
             return { user, accessToken, refreshToken };
         } catch (err: unknown) {
             if (err instanceof UniqueViolationError) {
@@ -35,13 +33,13 @@ export class AuthService {
     }
 
     async loginUser(email: string, password: string): Promise<AuthResponse> {
-        const user = await this.deps.userRepo.findUserByEmail(email);
+        const user = await this.userRepo.findUserByEmail(email);
         if (!user) throw new UnauthorizedError("Invalid credentials");
 
-        const success = await this.deps.password.verifyPassword(user.passwordHash, password);
+        const success = await this.password.verifyPassword(user.passwordHash, password);
         if (!success) throw new UnauthorizedError("Invalid credentials");
 
-        const { accessToken, refreshToken } = await this.deps.tokenService.generateTokenPair(user.id, user.role);
+        const { accessToken, refreshToken } = await this.tokenService.generateTokenPair(user.id, user.email, user.role);
         const publicUser = {
             id: user.id, email: user.email, role: user.role
         };

@@ -3,26 +3,34 @@ process.loadEnvFile(envFilePath);
 interface Config {
     env: string;
     port: number;
+    baseUrl: string;
     db: {
         url: String;
     }
     jwt: {
         secret: string,
-        expiresAtMs: string,
-        refreshExpiresAtMs: string
-    }
+        expiresAtMs: number,
+        refreshExpiresAtMs: number
+    },
+    adminInvites: {
+        expiresAtMs: number
+    },
 };
 
 export const config = {
     env: process.env.NODE_ENV || "development",
     port: Number(envOrThrow("PORT")),
+    baseUrl: envOrThrow("API_BASE_URL"),
     db: {
         url: envOrThrow("DATABASE_URL")
     },
     jwt: {
         secret: envOrThrow("JWT_SECRET"),
-        expiresAtMs: envOrThrow("JWT_EXPIRES_AT"),
-        refreshExpiresAtMs: envOrThrow("JWT_REFRESH_EXPIRES_AT")
+        expiresAtMs: Number(envOrThrow("JWT_EXPIRES_AT")),
+        refreshExpiresAtMs: Number(envOrThrow("JWT_REFRESH_EXPIRES_AT"))
+    },
+    adminInvites: {
+        expiresAtMs: Number(envOrThrow("ADMIN_INVITE_EXPIRES_AT"))
     },
 };
 

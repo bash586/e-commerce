@@ -28,6 +28,7 @@ import {
     paymentWebhookController
 } from "./controllers/payments.js";
 import { authenticateMiddleware, authorizeRoleMiddleware, errorMiddleware } from "./middleware.js";
+import { acceptAdminInvitationController, createAdminInvitationController } from "./controllers/admin.js";
 
 const app = express();
 app.use(express.json());
@@ -39,12 +40,34 @@ const authRouter = express.Router();
 authRouter.post("/register", registerController);
 authRouter.post("/login", loginController);
 authRouter.post("/logout", authenticateMiddleware, logoutController);
-authRouter.post("/refresh", authenticateMiddleware, refreshTokenController);
+authRouter.post(
+    "/refresh",
+    authenticateMiddleware,
+    refreshTokenController
+);
+
+const adminRouter = express.Router();
+adminRouter.post(
+    "/invitations",
+    authenticateMiddleware,
+    authorizeRoleMiddleware(['admin']),
+    createAdminInvitationController
+);
+adminRouter.post(
+    "/invitations/accept",
+    authenticateMiddleware,
+    acceptAdminInvitationController
+);
 
 const productsRouter = express.Router();
-productsRouter.use(authenticateMiddleware)
+productsRouter.use(authenticateMiddleware);
 productsRouter.get("/", getProductsController);
-productsRouter.post("/", authorizeRoleMiddleware(['admin']), addProductByIdController);
+productsRouter.post(
+    "/",
+    authenticateMiddleware,
+    authorizeRoleMiddleware(['admin']),
+    addProductByIdController
+);
 productsRouter.get("/:productId", getProductByIdController);
 
 const cartRouter = express.Router();
@@ -75,6 +98,7 @@ apiRouter.use("/checkout", checkoutRouter);
 apiRouter.use("/orders", ordersRouter);
 apiRouter.use("/payments", paymentsRouter);
 apiRouter.use("/webhooks", webhooksRouter);
+apiRouter.use("/admin", adminRouter);
 
 app.use("/api/v1", apiRouter);
 app.use(errorMiddleware);

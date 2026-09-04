@@ -107,3 +107,18 @@ export const refreshTokensTable = pgTable("refresh_tokens", {
 ]);
 export type RefreshToken = typeof refreshTokensTable.$inferSelect;
 export type NewRefreshToken = typeof refreshTokensTable.$inferInsert;
+
+export const adminInvitesTable = pgTable("admin_invites", {
+    id: uuid().defaultRandom().primaryKey(),
+    invitedBy: uuid("invited_by")
+        .notNull()
+        .references(() => usersTable.id, { onDelete: "cascade" }),
+    email: varchar("email").notNull(),
+    tokenHash: varchar("token_hash")
+        .notNull()
+        .unique(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    acceptedAt: timestamp("accepted_at")
+});
+export type AdminInvite = typeof adminInvitesTable.$inferSelect;
+export type NewAdminInvite = typeof adminInvitesTable.$inferInsert;

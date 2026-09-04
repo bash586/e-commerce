@@ -46,6 +46,7 @@ export async function authenticateMiddleware(
         const payload = JwtSchema.parse(decoded);
         req.user = {
             id: payload.sub,
+            email: payload.email,
             role: payload.role
         };
         next();

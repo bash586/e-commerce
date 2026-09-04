@@ -18,5 +18,10 @@ export const LoginSchema = z.object({
 export const JwtSchema = z.object({
     sub: z.string(),
     exp: z.number(),
-    role: z.string()
+    role: z.string(),
+    email: z.string(),
+});
+
+export const createAdminInvitationSchema = z.object({
+    email: z.string()
 });

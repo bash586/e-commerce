@@ -1,12 +1,12 @@
 import { eq } from "drizzle-orm";
-import { db as globalDb } from "../index.js";
+import { db as globalDb, DbType, TxType } from "../index.js";
 import { PublicUser, User, usersTable } from "../schema.js";
 import { expectFirstRow, withDbErrors } from "../../utils/db.js";
+import { email } from "zod";
 
-type DbType = typeof globalDb;
 
 export class UserRepository {
-    constructor(private db: DbType = globalDb) {}
+    constructor(private db: DbType = globalDb) { }
 
     async createUser(
         email: string,
@@ -52,6 +52,21 @@ export class UserRepository {
                 .from(usersTable)
                 .where(eq(usersTable.id, userId))
         );
+        return user;
+    }
+    async updateRoleToAdmin(email: string, tx?: TxType): Promise<PublicUser> {
+        const client = tx ?? this.db;
+        const user: PublicUser = expectFirstRow(
+            await withDbErrors(
+                () => client.update(usersTable)
+                    .set({ role: "admin" })
+                    .where(eq(usersTable.email, email))
+                    .returning({
+                        id: usersTable.id,
+                        email: usersTable.email,
+                        role: usersTable.role
+                    })
+            ));
         return user;
     }
 }

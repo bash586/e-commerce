@@ -11,19 +11,19 @@ import { TokenService } from "../services/token.js";
 import { AuthService } from "../services/auth.js";
 
 // --- Wire up dependencies ---
-const tokenService = new TokenService({
-    tokenRepo: new TokenRepository(),
-    userRepo: new UserRepository(),
-    crypto: new CryptoService(),
+const tokenService = new TokenService(
+    new TokenRepository(),
+    new UserRepository(),
+    new CryptoService(),
     config,
-    signJwt: jwt.sign,
-});
+    jwt.sign
+);
 
-export const authService = new AuthService({
-    userRepo: new UserRepository(),
-    password: new PasswordService(),
-    tokenService,
-});
+export const authService = new AuthService(
+    new UserRepository(),
+    new PasswordService(),
+    tokenService
+);
 
 export async function registerController(req: Request, res: Response) {
     const result = RegisterSchema.safeParse(req.body);
@@ -41,14 +41,14 @@ export async function registerController(req: Request, res: Response) {
         httpOnly: true,
         secure: config.env === "production",
         sameSite: "strict",
-        maxAge: Number(config.jwt.expiresAtMs)
+        maxAge: config.jwt.expiresAtMs
     });
 
     res.cookie("refresh_token", authResponse.refreshToken, {
         httpOnly: true,
         secure: config.env === "production",
         sameSite: "strict",
-        maxAge: Number(config.jwt.refreshExpiresAtMs)
+        maxAge: config.jwt.refreshExpiresAtMs
     });
 
     res.status(201).json(authResponse);
@@ -74,12 +74,12 @@ export async function loginController(req: Request, res: Response): Promise<void
     res.cookie("access_token", authResponse.accessToken, {
         httpOnly: true,
         secure: config.env === "production",
-        maxAge: Number(config.jwt.expiresAtMs)
+        maxAge: config.jwt.expiresAtMs
     });
     res.cookie("refresh_token", authResponse.refreshToken, {
         httpOnly: true,
         secure: config.env === "production",
-        maxAge: Number(config.jwt.refreshExpiresAtMs)
+        maxAge: config.jwt.refreshExpiresAtMs
     });
 
     res.status(200).json(authResponse);
@@ -105,12 +105,12 @@ export async function refreshTokenController(req: Request, res: Response): Promi
     res.cookie("access_token", newTokens.accessToken, {
         httpOnly: true,
         secure: config.env === "production",
-        maxAge: Number(config.jwt.expiresAtMs),
+        maxAge: config.jwt.expiresAtMs,
     });
     res.cookie("refresh_token", newTokens.refreshToken, {
         httpOnly: true,
         secure: config.env === "production",
-        maxAge: Number(config.jwt.refreshExpiresAtMs),
+        maxAge: config.jwt.refreshExpiresAtMs,
     });
 
     res.status(200).json(newTokens);

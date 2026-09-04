@@ -1,9 +1,8 @@
 import { eq } from "drizzle-orm";
-import { db as globalDb } from "../index.js";
+import { db as globalDb, DbType, TxType } from "../index.js";
 import { RefreshToken, refreshTokensTable } from "../schema.js";
 import { expectFirstRow, withDbErrors } from "../../utils/db.js";
 
-type DbType = typeof globalDb;
 
 export class TokenRepository {
     constructor(private db: DbType = globalDb) { }
