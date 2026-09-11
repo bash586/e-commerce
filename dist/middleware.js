@@ -1,22 +1,18 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.errorMiddleware = errorMiddleware;
-exports.authenticateMiddleware = authenticateMiddleware;
-const postgres_1 = require("./errors/postgres");
-const http_1 = require("./errors/http");
-const jsonwebtoken_1 = require("jsonwebtoken");
-const schemas_1 = require("./schemas");
-const config_1 = require("./config");
-async function errorMiddleware(err, req, res, next) {
-    if (err instanceof postgres_1.PostgresError) {
-        if (err instanceof postgres_1.TransientDbError) {
+import { PostgresError, TransientDbError } from "./errors/postgres.js";
+import { ForbiddenError, HttpError, UnauthorizedError } from "./errors/http.js";
+import jwt from "jsonwebtoken";
+import { JwtSchema } from "./schemas.js";
+import { config } from "./config.js";
+export async function errorMiddleware(err, req, res, next) {
+    if (err instanceof PostgresError) {
+        if (err instanceof TransientDbError) {
             res.setHeader("Retry-After", "10");
             res.status(503).json({ error: "service is down, retry later" });
             return;
         }
         res.status(400).json({ error: err.message });
     }
-    else if (err instanceof http_1.HttpError) {
+    else if (err instanceof HttpError) {
         res.status(err.statusCode).json({ error: err.message });
     }
     else {
@@ -24,21 +20,53 @@ async function errorMiddleware(err, req, res, next) {
         res.status(500).json({ error: "Internal Server Error" });
     }
 }
-async function authenticateMiddleware(req, res, next) {
+export async function authenticateMiddleware(req, res, next) {
     const accessToken = req.cookies.access_token;
     if (!accessToken)
-        throw new http_1.UnauthorizedError("Login required");
+        throw new UnauthorizedError("Login required");
     try {
-        const decoded = (0, jsonwebtoken_1.verify)(accessToken, config_1.config.jwt.secret, {
+        const decoded = jwt.verify(accessToken, config.jwt.secret, {
             algorithms: ["HS256"],
             issuer: "ecommerce-api",
         });
-        const payload = schemas_1.JwtSchema.parse(decoded);
-        req.userId = payload.sub;
+        const payload = JwtSchema.parse(decoded);
+        req.user = {
+            id: payload.sub,
+            email: payload.email,
+            role: payload.role
+        };
         next();
     }
-    catch {
-        throw new http_1.UnauthorizedError("Invalid or expired token");
+    catch (err) {
+        // must refresh
+        if (err instanceof jwt.TokenExpiredError)
+            throw new UnauthorizedError("expired token");
+        // must login
+        throw new UnauthorizedError("Invalid token");
     }
+}
+export function authorizeRoleMiddleware(allowedRoles) {
+    return (req, res, next) => {
+        if (!allowedRoles.includes(req.user.role)) {
+            throw new ForbiddenError("You are not authorized to perform this action");
+        }
+        next();
+    };
+}
+export function validateMiddleware(schema) {
+    return async (req, res, next) => {
+        const result = await schema.safeParseAsync(req.body);
+        if (!result.success) {
+            const errors = result.error.issues.map(issue => ({
+                field: issue.path.join("."),
+                message: issue.message,
+            }));
+            res.status(400).json({
+                errors: errors
+            });
+            return;
+        }
+        next();
+    };
 }
 //# sourceMappingURL=middleware.js.map

@@ -32,7 +32,7 @@ describe("POST /api/v1/auth/register", () => {
         // Status
         expect(res.status).toBe(401);
         expect(res.body).toMatchObject({
-            error: "Login to proceed"
+            error: "expired token"
         });
         vi.useRealTimers();
     });

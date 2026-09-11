@@ -32,6 +32,10 @@ export const config = {
     adminInvites: {
         expiresAtMs: Number(envOrThrow("ADMIN_INVITE_EXPIRES_AT"))
     },
+    adminBootstrap: {
+        email: process.env.ADMIN_EMAIL,
+        password: process.env.ADMIN_PASSWORD
+    },
 };
 
 function envOrThrow(key: string) {

@@ -7,9 +7,11 @@ import {
     refreshTokenController,
 } from "./controllers/auth.js";
 import {
-    getProductsController,
+    listProductsController,
     getProductByIdController,
-    addProductByIdController
+    updateProductController,
+    createProductController,
+    deleteProductController
 } from "./controllers/products.js";
 import {
     getCartController,
@@ -27,8 +29,9 @@ import {
     getPaymentByIdController,
     paymentWebhookController
 } from "./controllers/payments.js";
-import { authenticateMiddleware, authorizeRoleMiddleware, errorMiddleware } from "./middleware.js";
+import { authenticateMiddleware, authorizeRoleMiddleware, errorMiddleware, validateMiddleware } from "./middleware.js";
 import { acceptAdminInvitationController, createAdminInvitationController } from "./controllers/admin.js";
+import { createProductSchema, listProductsQuerySchema, updateProductSchema } from "./schemas.js";
 
 const app = express();
 app.use(express.json());
@@ -60,15 +63,30 @@ adminRouter.post(
 );
 
 const productsRouter = express.Router();
-productsRouter.use(authenticateMiddleware);
-productsRouter.get("/", getProductsController);
+productsRouter.get(
+    "/",
+    validateMiddleware(listProductsQuerySchema, "query"),
+    listProductsController
+);
 productsRouter.post(
     "/",
     authenticateMiddleware,
     authorizeRoleMiddleware(['admin']),
-    addProductByIdController
+    validateMiddleware(createProductSchema, "body"),
+    createProductController
 );
 productsRouter.get("/:productId", getProductByIdController);
+productsRouter.delete(
+    "/:productId",
+    authenticateMiddleware,
+    authorizeRoleMiddleware(['admin']),
+    deleteProductController
+);
+productsRouter.post(
+    "/:productId",
+    validateMiddleware(updateProductSchema, "body"),
+    updateProductController
+);
 
 const cartRouter = express.Router();
 cartRouter.get("/", getCartController);

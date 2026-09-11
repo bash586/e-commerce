@@ -1,30 +1,57 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.createUser = createUser;
-exports.findUserByEmail = findUserByEmail;
-const drizzle_orm_1 = require("drizzle-orm");
-const __1 = require("..");
-const schema_1 = require("../schema");
-const db_1 = require("../../utils/db");
-async function createUser(email, passwordHash) {
-    const user = (0, db_1.expectFirstRow)(await (0, db_1.withDbErrors)(() => __1.db.insert(schema_1.usersTable)
-        .values({
+import { eq } from "drizzle-orm";
+import { db as globalDb } from "../index.js";
+import { usersTable } from "../schema.js";
+import { expectFirstRow, withDbErrors } from "../../utils/db.js";
+export class UserRepository {
+    db;
+    constructor(db = globalDb) {
+        this.db = db;
+    }
+    async createUser(email, passwordHash) {
+        const user = expectFirstRow(await withDbErrors(() => this.db.insert(usersTable)
+            .values({
             email,
             passwordHash
         }).returning({
-            id: schema_1.usersTable.id,
-            email: schema_1.usersTable.email
+            id: usersTable.id,
+            email: usersTable.email,
+            role: usersTable.role
         })));
-    return user;
-}
-async function findUserByEmail(email) {
-    const [user] = await (0, db_1.withDbErrors)(() => __1.db.select({
-        id: schema_1.usersTable.id,
-        email: schema_1.usersTable.email,
-        passwordHash: schema_1.usersTable.passwordHash
-    })
-        .from(schema_1.usersTable)
-        .where((0, drizzle_orm_1.eq)(schema_1.usersTable.email, email)));
-    return user;
+        return user;
+    }
+    async findUserByEmail(email) {
+        const [user] = await withDbErrors(() => this.db.select({
+            id: usersTable.id,
+            email: usersTable.email,
+            passwordHash: usersTable.passwordHash,
+            role: usersTable.role
+        })
+            .from(usersTable)
+            .where(eq(usersTable.email, email)));
+        return user;
+    }
+    async findUserById(userId) {
+        const [user] = await withDbErrors(() => this.db.select({
+            id: usersTable.id,
+            email: usersTable.email,
+            passwordHash: usersTable.passwordHash,
+            role: usersTable.role
+        })
+            .from(usersTable)
+            .where(eq(usersTable.id, userId)));
+        return user;
+    }
+    async updateRoleToAdmin(email, tx) {
+        const client = tx ?? this.db;
+        const user = expectFirstRow(await withDbErrors(() => client.update(usersTable)
+            .set({ role: "admin" })
+            .where(eq(usersTable.email, email))
+            .returning({
+            id: usersTable.id,
+            email: usersTable.email,
+            role: usersTable.role
+        })));
+        return user;
+    }
 }
 //# sourceMappingURL=users.js.map

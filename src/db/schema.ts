@@ -21,6 +21,8 @@ export const productsTable = pgTable("products", {
     price: numeric({ precision: 10, scale: 2 }).notNull(),
     stock: integer().notNull().default(0)
 });
+export type Product = typeof productsTable.$inferSelect;
+export type NewProduct = typeof productsTable.$inferInsert;
 
 export const cartsTable = pgTable("carts", {
     id: uuid().defaultRandom().primaryKey(),

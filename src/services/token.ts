@@ -53,7 +53,7 @@ export class TokenService {
         await this.tokenRepo.deleteRefreshToken(tokenHash);
     }
 
-    async generateTokenPair(userId: string, role: string, email: string): Promise<TokenPair> {
+    async generateTokenPair(userId: string, email: string, role: string): Promise<TokenPair> {
         const accessToken = this.createAccessToken(userId, email, role);
         const refreshToken = await this.createRefreshToken(userId);
         return { accessToken, refreshToken };

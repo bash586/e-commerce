@@ -23,3 +23,5 @@ coverage/
 test.http
 ignoreme.md
 .DS_Store
+# AI context file
+CODEBASE_MAP.md

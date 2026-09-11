@@ -1,7 +1,9 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.db = void 0;
-const config_1 = require("../config");
-const node_postgres_1 = require("drizzle-orm/node-postgres");
-exports.db = (0, node_postgres_1.drizzle)(config_1.config.db.url);
+import { Pool } from "pg";
+import { config } from "../config.js";
+import { drizzle } from "drizzle-orm/node-postgres";
+export const pool = new Pool({
+    connectionString: config.db.url,
+    max: 10,
+});
+export const db = drizzle({ client: pool });
 //# sourceMappingURL=index.js.map

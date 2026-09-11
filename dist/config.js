@@ -1,18 +1,20 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.config = void 0;
-process.loadEnvFile("./.env");
+const envFilePath = (process.env.NODE_ENV === "test") ? "./.env.test" : "./.env";
+process.loadEnvFile(envFilePath);
 ;
-exports.config = {
+export const config = {
     env: process.env.NODE_ENV || "development",
     port: Number(envOrThrow("PORT")),
+    baseUrl: envOrThrow("API_BASE_URL"),
     db: {
         url: envOrThrow("DATABASE_URL")
     },
     jwt: {
         secret: envOrThrow("JWT_SECRET"),
-        expiresAtMs: envOrThrow("JWT_EXPIRES_AT"),
-        refreshExpiresAtMs: envOrThrow("JWT_REFRESH_EXPIRES_AT")
+        expiresAtMs: Number(envOrThrow("JWT_EXPIRES_AT")),
+        refreshExpiresAtMs: Number(envOrThrow("JWT_REFRESH_EXPIRES_AT"))
+    },
+    adminInvites: {
+        expiresAtMs: Number(envOrThrow("ADMIN_INVITE_EXPIRES_AT"))
     },
 };
 function envOrThrow(key) {

@@ -49,9 +49,13 @@ export async function authenticateMiddleware(
             email: payload.email,
             role: payload.role
         };
+        console.log(req.user);
         next();
-    } catch {
-        throw new UnauthorizedError("Invalid or expired token");
+    } catch (err: unknown) {
+        // must refresh
+        if (err instanceof jwt.TokenExpiredError) throw new UnauthorizedError("expired token");
+        // must login
+        throw new UnauthorizedError("Invalid token");
     }
 }
 
@@ -70,13 +74,13 @@ export function authorizeRoleMiddleware(allowedRoles: string[]) {
 
 import * as z from "zod";
 
-export function validateMiddleware(schema: z.ZodObject) {
+export function validateMiddleware(schema: z.ZodType, requestPart: "body" | "query" = "body") {
     return async (
         req: Req,
         res: Res,
         next: NextFunction
     ) => {
-        const result = await schema.safeParseAsync(req.body);
+        const result = await schema.safeParseAsync(req[requestPart]);
         if (!result.success) {
             const errors = result.error.issues.map(issue => ({
                 field: issue.path.join("."),
@@ -88,6 +92,7 @@ export function validateMiddleware(schema: z.ZodObject) {
             });
             return;
         }
+        res.locals.validated = result.data;
         next();
     }
 }
